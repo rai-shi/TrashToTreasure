@@ -3,6 +3,8 @@ User
 - id: int
 - username: str
 - email: str
+- first_name: str
+- last_name: str
 - password: str
 
 Project
@@ -17,7 +19,7 @@ Project
 - is_public: bool
 """
 
-from database import Base
+from utils.database import Base
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
 
 class User(Base):
@@ -26,6 +28,8 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True)
     email = Column(String, unique=True)
+    first_name = Column(String)
+    last_name = Column(String)
     hashed_password = Column(String)
 
 class Project(Base):

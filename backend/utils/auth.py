@@ -5,7 +5,7 @@ from fastapi import Depends, HTTPException
 from pydantic import BaseModel, Field
 from starlette import status
 from fastapi.security import OAuth2PasswordBearer
-from backend.utils.models import User
+from utils.models import User
 from passlib.context import CryptContext
 from typing import Annotated
 from sqlalchemy.orm import Session
@@ -34,16 +34,6 @@ class CreateUserRequest(BaseModel):
     last_name: str = Field(min_length=3, max_length=50)
     password: str = Field(min_length=8, max_length=100)
 
-class CreateUserResponse(BaseModel):
-    id: int
-    username: str
-    email: str
-    first_name: str
-    last_name: str
-
-class LoginRequest(BaseModel):
-    username: str = Field(min_length=3, max_length=50)
-    password: str = Field(min_length=8, max_length=100)
 
 class Token(BaseModel):
     access_token: str

@@ -10,13 +10,14 @@ from datetime import timedelta, datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request
 from starlette import status
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.responses import JSONResponse
 from typing import Annotated
 from sqlalchemy.orm import Session
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
-from backend.utils.database import SessionLocal, get_db
-from backend.utils.models import User, Base
-from backend.utils.auth import *
+from utils.database import SessionLocal, get_db
+from utils.models import User, Base
+from utils.auth import *
 
 
 router = APIRouter(
@@ -85,12 +86,15 @@ async def create_user(createUserRequest: CreateUserRequest,
     db.commit()
     db.refresh(user)
 
-    return CreateUserResponse(
-        id=user.id,
-        username=user.username,
-        email=user.email,
-        first_name=user.first_name,
-        last_name=user.last_name
+    return JSONResponse(
+        content={"user": {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "first_name": user.first_name,
+            "last_name": user.last_name
+        }},
+        status_code=status.HTTP_201_CREATED
     )
 
 
@@ -124,13 +128,21 @@ async def login_user(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
         expire_time=timedelta(minutes=30)
     )
 
-    return {
-        "access_token": token,
-        "token_type": "bearer",
-    }
+    # return {
+    #     "access_token": token,
+    #     "token_type": "bearer",
+    # }
+    return JSONResponse(
+        content={
+                    "access_token": token,
+                    "token_type": "bearer",
+                },
+        status_code=status.HTTP_201_CREATED
+    )
 
 
 
+# ! cookies olduğu sürece çalışabilir
 @router.post("/logout")
 async def logout_user(request: Request):
     """
@@ -143,3 +155,43 @@ async def logout_user(request: Request):
     redirect_response.delete_cookie("access_token")
     return redirect_response
     
+
+
+@router.get("/profile",
+            status_code=status.HTTP_200_OK)
+async def get_user_profile(request: Request,
+                            user_: user_dependency,
+                            db: db_dependency):
+    """
+    Get user profile
+    - return 
+        - user
+            - id
+            - username
+            - email
+            - first_name
+            - last_name
+    """
+    try:
+        # token = request.cookies.get("access_token")
+
+        auth_header = request.headers.get("Authorization")
+        token = auth_header.split(" ")[1]
+
+        verified_user = verify_token(token)
+        print(verified_user)
+        if verified_user is None:
+            return redirect_to_login()
+        
+        user = get_user_by_id(db=db, user_id=verified_user["user_id"])
+        user_content = {
+                            "id":user.id,
+                            "username":user.username,
+                            "email":user.email,
+                            "first_name":user.first_name,
+                            "last_name":user.last_name
+        }       
+        return JSONResponse(content=user_content)
+    except:
+        return redirect_to_login()
+

@@ -19,7 +19,7 @@ Project
 - is_public: bool
 """
 
-from utils.database import Base
+from backend.utils.database import Base
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
 
 class User(Base):
@@ -37,7 +37,7 @@ class Project(Base):
 
     id              = Column(Integer, primary_key=True, index=True)
     user_id         = Column(Integer, ForeignKey('users.id'))
-    name            = Column(String) # project name
+    title            = Column(String) # project name
     description     = Column(String) # project short description
     roadmap         = Column(String) # project steps
     image           = Column(String) # recyclable item image

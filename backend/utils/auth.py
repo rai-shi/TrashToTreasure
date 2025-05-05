@@ -1,21 +1,28 @@
 from datetime import timedelta, datetime, timezone
+from pathlib import Path
+
 from fastapi import Depends, HTTPException
 from pydantic import BaseModel, Field
 from starlette import status
 from fastapi.security import OAuth2PasswordBearer
-from utils.models import User
+from backend.utils.models import User
 from passlib.context import CryptContext
 from typing import Annotated
 from sqlalchemy.orm import Session
 from jose import jwt, JWTError
 from fastapi.responses import RedirectResponse
-
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
-JWT_SECRET_KEY  = os.getenv("JWT_SECRET_KEY")
-JWT_ALGORITHM   = os.getenv("JWT_ALGORITHM")
+current_directory = os.path.dirname(os.path.abspath(__file__)) # utils directory, routers
+backend_directory = os.path.dirname(current_directory) # backend directory
+
+environment_path = backend_directory + "/.env"
+
+load_dotenv(environment_path)
+
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+JWT_ALGORITHM = os.getenv("JWT_ALGORITHM")
 
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth_bearer = OAuth2PasswordBearer(tokenUrl="/auth/login")

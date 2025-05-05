@@ -15,10 +15,9 @@ from typing import Annotated
 from sqlalchemy.orm import Session
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
-
-from utils.database import SessionLocal, get_db
-from utils.models import User, Base
-from utils.auth import *
+from backend.utils.database import SessionLocal, get_db
+from backend.utils.models import User, Base
+from backend.utils.auth import *
 
 
 router = APIRouter(

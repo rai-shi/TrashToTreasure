@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
+
 from jose import jwt, JWTError
 
 from pydantic import BaseModel, Field
@@ -16,6 +17,7 @@ from sqlalchemy.orm import Session
 from utils.database import SessionLocal, get_db
 from utils.models import User, Base
 from utils.auth import *
+
 
 
 router = APIRouter(

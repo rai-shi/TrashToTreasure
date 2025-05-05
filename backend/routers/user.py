@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 """
 endpoints:
     profile
@@ -11,7 +12,28 @@ from sqlalchemy.orm import Session
 
 from utils.database import get_db
 from utils.models import User, Project
+=======
+from datetime import timedelta, datetime, timezone
+
+from fastapi import APIRouter, Depends, Path, HTTPException, Request, status
+from fastapi.responses import JSONResponse
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import RedirectResponse
+
+from jose import jwt, JWTError
+
+from pydantic import BaseModel, Field
+from passlib.context import CryptContext
+from typing import Annotated
+
+from sqlalchemy.orm import Session
+
+from utils.database import SessionLocal, get_db
+from utils.models import User, Base
+>>>>>>> 0afa934b42d025cb26f46261f4ee5b91dd0733b9
 from utils.auth import *
+
 
 
 router = APIRouter(
@@ -22,6 +44,7 @@ router = APIRouter(
 user_dependency = Annotated[dict, Depends(verify_token)]
 db_dependency = Annotated[Session, Depends(get_db)]
 
+<<<<<<< HEAD
 class UserProjectResponse(BaseModel):
     id: int
     name: str
@@ -110,3 +133,46 @@ async def get_user_projects(user: user_dependency, db: db_dependency):
     except Exception as e:
         raise HTTPException(status_code=401, detail="Invalid authentication")
     
+=======
+
+
+# @router.get("/profile",
+#             status_code=status.HTTP_200_OK)
+# async def get_user_profile(request: Request,
+#                             user_: user_dependency,
+#                             db: db_dependency):
+#     """
+#     Get user profile
+#     - return 
+#         - user
+#             - id
+#             - username
+#             - email
+#             - first_name
+#             - last_name
+#     """
+#     try:
+#         token = request.cookies.get("access_token")
+#         verified_user = await verify_token(token)
+#         if verified_user is None:
+#             return redirect_to_login()
+        
+#         user = get_user_by_id(db=db, user_id=verified_user["user_id"])
+#         print(user.username)
+#         user_dict = {
+#             "id": user.id,
+#             "username": user.username,
+#             "email": user.email,
+#             "first_name": user.first_name,
+#             "last_name": user.last_name
+#         }
+#         return templates.TemplateResponse("profile.html", 
+#                                           {
+#                                             "request": request,
+#                                             "user": user_dict,    
+#                                             }
+#                                           )
+#     except:
+#         return redirect_to_login()
+        
+>>>>>>> 0afa934b42d025cb26f46261f4ee5b91dd0733b9

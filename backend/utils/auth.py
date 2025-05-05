@@ -1,4 +1,6 @@
 from datetime import timedelta, datetime, timezone
+from pathlib import Path
+
 from fastapi import Depends, HTTPException
 from pydantic import BaseModel, Field
 from starlette import status
@@ -9,13 +11,24 @@ from typing import Annotated
 from sqlalchemy.orm import Session
 from jose import jwt, JWTError
 from fastapi.responses import RedirectResponse
-
 import os
 from dotenv import load_dotenv
 
+<<<<<<< HEAD
 load_dotenv()
 JWT_SECRET_KEY  = os.getenv("JWT_SECRET_KEY", "supersecretkey")
 JWT_ALGORITHM   = os.getenv("JWT_ALGORITHM", "HS256")
+=======
+current_directory = os.path.dirname(os.path.abspath(__file__)) # utils directory, routers
+backend_directory = os.path.dirname(current_directory) # backend directory
+
+environment_path = backend_directory + "/.env"
+
+load_dotenv(environment_path)
+
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+JWT_ALGORITHM = os.getenv("JWT_ALGORITHM")
+>>>>>>> 0afa934b42d025cb26f46261f4ee5b91dd0733b9
 
 oauth_bearer = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
@@ -26,16 +39,6 @@ class CreateUserRequest(BaseModel):
     last_name: str = Field(min_length=3, max_length=50)
     password: str = Field(min_length=8, max_length=100)
 
-class CreateUserResponse(BaseModel):
-    id: int
-    username: str
-    email: str
-    first_name: str
-    last_name: str
-
-class LoginRequest(BaseModel):
-    username: str = Field(min_length=3, max_length=50)
-    password: str = Field(min_length=8, max_length=100)
 
 class Token(BaseModel):
     access_token: str

@@ -9,10 +9,16 @@ from datetime import timedelta, datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request
 from starlette import status
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.responses import JSONResponse
 from typing import Annotated
 from sqlalchemy.orm import Session
+<<<<<<< HEAD
 from json import JSONDecodeError
 
+=======
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import RedirectResponse
+>>>>>>> 0afa934b42d025cb26f46261f4ee5b91dd0733b9
 from utils.database import SessionLocal, get_db
 from utils.models import User, Base
 from utils.auth import *
@@ -90,6 +96,7 @@ async def create_user(request: Request, db: db_dependency):
     db.refresh(user)
             print(f"Kullanıcı başarıyla oluşturuldu: ID={user.id}")
 
+<<<<<<< HEAD
             return {
                 "id": user.id,
                 "username": user.username,
@@ -115,6 +122,17 @@ async def create_user(request: Request, db: db_dependency):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
+=======
+    return JSONResponse(
+        content={"user": {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "first_name": user.first_name,
+            "last_name": user.last_name
+        }},
+        status_code=status.HTTP_201_CREATED
+>>>>>>> 0afa934b42d025cb26f46261f4ee5b91dd0733b9
     )
 
 
@@ -157,6 +175,7 @@ async def login_user(request: Request, db: db_dependency):
         expire_time=timedelta(minutes=30)
     )
 
+<<<<<<< HEAD
     return {
         "access_token": token,
         "token_type": "bearer",
@@ -211,4 +230,72 @@ async def refresh_token(user: user_dependency, db: db_dependency):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
         )
+=======
+    # return {
+    #     "access_token": token,
+    #     "token_type": "bearer",
+    # }
+    return JSONResponse(
+        content={
+                    "access_token": token,
+                    "token_type": "bearer",
+                },
+        status_code=status.HTTP_201_CREATED
+    )
+
+
+
+# ! cookies olduğu sürece çalışabilir
+@router.post("/logout")
+async def logout_user(request: Request):
+    """
+    Logout user
+    - return 
+        - redirect to login page
+    """
+    redirect_response = RedirectResponse(url="/auth/login-page", 
+                                         status_code=status.HTTP_302_FOUND)
+    redirect_response.delete_cookie("access_token")
+    return redirect_response
+>>>>>>> 0afa934b42d025cb26f46261f4ee5b91dd0733b9
     
+
+
+@router.get("/profile",
+            status_code=status.HTTP_200_OK)
+async def get_user_profile(request: Request,
+                            user_: user_dependency,
+                            db: db_dependency):
+    """
+    Get user profile
+    - return 
+        - user
+            - id
+            - username
+            - email
+            - first_name
+            - last_name
+    """
+    try:
+        # token = request.cookies.get("access_token")
+
+        auth_header = request.headers.get("Authorization")
+        token = auth_header.split(" ")[1]
+
+        verified_user = verify_token(token)
+        print(verified_user)
+        if verified_user is None:
+            return redirect_to_login()
+        
+        user = get_user_by_id(db=db, user_id=verified_user["user_id"])
+        user_content = {
+                            "id":user.id,
+                            "username":user.username,
+                            "email":user.email,
+                            "first_name":user.first_name,
+                            "last_name":user.last_name
+        }       
+        return JSONResponse(content=user_content)
+    except:
+        return redirect_to_login()
+

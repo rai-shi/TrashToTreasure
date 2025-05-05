@@ -5,7 +5,7 @@ from fastapi import Depends, HTTPException
 from pydantic import BaseModel, Field
 from starlette import status
 from fastapi.security import OAuth2PasswordBearer
-from backend.utils.models import User
+from utils.models import User
 from passlib.context import CryptContext
 from typing import Annotated
 from sqlalchemy.orm import Session

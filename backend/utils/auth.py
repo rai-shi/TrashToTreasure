@@ -27,16 +27,6 @@ class CreateUserRequest(BaseModel):
     last_name: str = Field(min_length=3, max_length=50)
     password: str = Field(min_length=8, max_length=100)
 
-class CreateUserResponse(BaseModel):
-    id: int
-    username: str
-    email: str
-    first_name: str
-    last_name: str
-
-class LoginRequest(BaseModel):
-    username: str = Field(min_length=3, max_length=50)
-    password: str = Field(min_length=8, max_length=100)
 
 class Token(BaseModel):
     access_token: str

@@ -35,8 +35,12 @@ class User(Base):
 class Project(Base):
     __tablename__ = 'project'
 
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String)
-    description = Column(String)
-    image = Column(String)
-    user_id = Column(Integer, ForeignKey('users.id'))
+    id              = Column(Integer, primary_key=True, index=True)
+    user_id         = Column(Integer, ForeignKey('users.id'))
+    name            = Column(String) # project name
+    description     = Column(String) # project short description
+    roadmap         = Column(String) # project steps
+    image           = Column(String) # recyclable item image
+    created_at      = Column(String)
+    # recycled_image  = Column(String, default="") # recycled item image
+    # is_public       = Column(Boolean, default=False)

@@ -10,6 +10,7 @@ from datetime import timedelta, datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request
 from starlette import status
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.responses import JSONResponse
 from typing import Annotated
 from sqlalchemy.orm import Session
 from fastapi.templating import Jinja2Templates
@@ -86,12 +87,15 @@ async def create_user(createUserRequest: CreateUserRequest,
     db.commit()
     db.refresh(user)
 
-    return CreateUserResponse(
-        id=user.id,
-        username=user.username,
-        email=user.email,
-        first_name=user.first_name,
-        last_name=user.last_name
+    return JSONResponse(
+        content={"user": {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "first_name": user.first_name,
+            "last_name": user.last_name
+        }},
+        status_code=status.HTTP_201_CREATED
     )
 
 
@@ -125,10 +129,17 @@ async def login_user(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
         expire_time=timedelta(minutes=30)
     )
 
-    return {
-        "access_token": token,
-        "token_type": "bearer",
-    }
+    # return {
+    #     "access_token": token,
+    #     "token_type": "bearer",
+    # }
+    return JSONResponse(
+        content={
+                    "access_token": token,
+                    "token_type": "bearer",
+                },
+        status_code=status.HTTP_201_CREATED
+    )
 
 
 

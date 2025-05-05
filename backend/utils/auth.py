@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 from starlette import status
 from fastapi.security import OAuth2PasswordBearer
 from utils.models import User
-from passlib.context import CryptContext
+import hashlib
 from typing import Annotated
 from sqlalchemy.orm import Session
 from jose import jwt, JWTError
@@ -14,10 +14,9 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-JWT_SECRET_KEY  = os.getenv("JWT_SECRET_KEY")
-JWT_ALGORITHM   = os.getenv("JWT_ALGORITHM")
+JWT_SECRET_KEY  = os.getenv("JWT_SECRET_KEY", "supersecretkey")
+JWT_ALGORITHM   = os.getenv("JWT_ALGORITHM", "HS256")
 
-bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth_bearer = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 class CreateUserRequest(BaseModel):
@@ -42,6 +41,12 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
+# Basit hash fonksiyonu
+def get_password_hash(password: str) -> str:
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return get_password_hash(plain_password) == hashed_password
 
 def authenticate_user(db: Session, 
                       username: str, 
@@ -49,7 +54,7 @@ def authenticate_user(db: Session,
     user = db.query(User).filter(User.username == username).first()
     if not user:
         return False
-    if not bcrypt_context.verify(password, user.hashed_password):
+    if not verify_password(password, user.hashed_password):
         return False
     return user
 

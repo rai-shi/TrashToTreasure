@@ -4,19 +4,13 @@ endpoints:
     get_user_projects
 """
 
-from datetime import timedelta, datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
-from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
-from passlib.context import CryptContext
-from typing import Annotated
+from typing import Annotated, List
 from sqlalchemy.orm import Session
-from jose import jwt, JWTError
-from fastapi.templating import Jinja2Templates
-from fastapi.responses import RedirectResponse
 
-from utils.database import SessionLocal, get_db
-from utils.models import User, Base
+from utils.database import get_db
+from utils.models import User, Project
 from utils.auth import *
 
 
@@ -25,62 +19,17 @@ router = APIRouter(
     tags=["User"]
 )
 
-current_directory = os.path.dirname(os.path.abspath(__file__)) # get current directory, routers
-backend_directory = os.path.dirname(current_directory) # backend directory
-project_directory = os.path.dirname(backend_directory) # project directory
-templates_directory = os.path.join(project_directory, "frontend", "templates") # templates directory
-
-templates = Jinja2Templates(directory=templates_directory)
-
-
 user_dependency = Annotated[dict, Depends(verify_token)]
 db_dependency = Annotated[Session, Depends(get_db)]
 
-# @router.get("/profile",
-#             status_code=status.HTTP_200_OK)
-# async def get_user_profile(request: Request,
-#                             user_: user_dependency,
-#                             db: db_dependency):
-#     """
-#     Get user profile
-#     - return 
-#         - user
-#             - id
-#             - username
-#             - email
-#             - first_name
-#             - last_name
-#     """
-#     try:
-#         auth_header = request.headers.get("Authorization")
-#         # Token'ı çıkar
-#         token = auth_header.split(" ")[1]
+class UserProjectResponse(BaseModel):
+    id: int
+    name: str
+    description: str
+    image: str
 
-#         verified_user = verify_token(token)
-#         print(verified_user)
-#         if verified_user is None:
-#             return redirect_to_login()
-        
-#         user = get_user_by_id(db=db, user_id=verified_user["user_id"])
-#         return {"user": CreateUserResponse(
-#                             id=user.id,
-#                             username=user.username,
-#                             email=user.email,
-#                             first_name=user.first_name,
-#                             last_name=user.last_name
-#                         )}
-#     except:
-#         return redirect_to_login()
-
-        
-
-
-
-@router.get("/profile",
-            status_code=status.HTTP_200_OK)
-async def get_user_profile(request: Request,
-                            user_: user_dependency,
-                            db: db_dependency):
+@router.get("/profile", status_code=status.HTTP_200_OK)
+async def get_user_profile(user: user_dependency, db: db_dependency):
     """
     Get user profile
     - return 
@@ -92,22 +41,72 @@ async def get_user_profile(request: Request,
             - last_name
     """
     try:
-        token = request.cookies.get("access_token")
-        verified_user = await verify_token(token)
-        if verified_user is None:
-            return redirect_to_login()
+        # Extract user_id from token payload
+        if not user or "user_id" not in user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token - missing user_id"
+            )
         
-        user = get_user_by_id(db=db, user_id=verified_user["user_id"])
-        print(user.username)
-        return templates.TemplateResponse("profile.html", 
-                                          {"request": request,
-                                           "user": CreateUserResponse(
-                                                id=user.id,
-                                                username=user.username,
-                                                email=user.email,
-                                                first_name=user.first_name,
-                                                last_name=user.last_name
-                                            )})
-    except:
-        return redirect_to_login()
+        user_id = user["user_id"]
+        
+        # Get user from database
+        try:
+            user_data = get_user_by_id(db=db, user_id=user_id)
+        except HTTPException as e:
+            if e.status_code == status.HTTP_404_NOT_FOUND:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"User with id {user_id} not found"
+                )
+            raise e
+        
+        # Return user profile data
+        return {
+            "user": {
+                "id": user_data.id,
+                "username": user_data.username,
+                "email": user_data.email,
+                "first_name": user_data.first_name,
+                "last_name": user_data.last_name
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error: {str(e)}"
+        )
+
+@router.get("/projects", status_code=status.HTTP_200_OK, response_model=List[UserProjectResponse])
+async def get_user_projects(user: user_dependency, db: db_dependency):
+    """
+    Get user projects
+    - return
+        - projects list
+    """
+    try:
+        user_id = user["user_id"]
+        
+        # Gerçek uygulamada veritabanından kullanıcının projeleri çekilecek
+        # Şimdilik örnek veriler döndürüyoruz
+        
+        return [
+            {
+                "id": 1,
+                "name": "Cam Şişe Lamba",
+                "description": "Eski şişelerden dekoratif bir lamba projesi",
+                "image": "https://via.placeholder.com/300x200?text=Sise+Lamba"
+            },
+            {
+                "id": 2,
+                "name": "Ahşap Kitaplık",
+                "description": "Eski ahşap parçalardan kitaplık projesi",
+                "image": "https://via.placeholder.com/300x200?text=Ahsap+Kitaplik"
+            }
+        ]
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Invalid authentication")
     

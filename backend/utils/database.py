@@ -1,28 +1,31 @@
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-
+from sqlalchemy.orm import Session, DeclarativeBase
+from typing import Generator
 import os
-from dotenv import load_dotenv
+import sys
 
-load_dotenv()
-SQLALCHEMY_DATABASE_URL   = os.getenv("SQLALCHEMY_DATABASE_URL")
+class Base(DeclarativeBase):
+    pass
 
+# Database path
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+print(f"Database directory: {BASE_DIR}")
+DATABASE_URL = f"sqlite:///{os.path.join(BASE_DIR, 'trashtotreasure.db')}"
+print(f"Database URL: {DATABASE_URL}")
+
+# Create SQLite engine
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={'check_same_thread': False}
+    DATABASE_URL, connect_args={"check_same_thread": False}
 )
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-Base = declarative_base()
-
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+def get_db() -> Generator[Session, None, None]:
+    """Get a database session"""
+    with Session(engine) as session:
+        try:
+            yield session
+        except Exception as e:
+            print(f"Database error: {str(e)}", file=sys.stderr)
+            session.rollback()
+            raise
 
 

@@ -1,3 +1,4 @@
 .env
 notes.txt
 *.db
+venv_trash

@@ -38,6 +38,7 @@ from bs4 import BeautifulSoup
 from utils.database import SessionLocal, get_db
 from utils.models import User, Base, Project, ProjectSchema
 from utils.auth import *
+from utils.geminiConnection import process_image_with_gemini
 
 
 BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -148,7 +149,8 @@ async def get_recycle_ideas(
     ve biz de bu projeyi veritabanına kaydederiz
     """
                     
-    ideas = ask_gemini(image)
+    ideas = process_image_with_gemini(image_path)
+    print(type(ideas))
 
     content = {
         "image": image_path,

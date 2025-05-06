@@ -25,25 +25,44 @@ const ProjectIdeaSelector = ({ token }) => {
     if (!file) return;
     setLoading(true);
     setError(null);
-
+  
     try {
       const formData = new FormData();
       formData.append("image", file);
-
+  
       const response = await axios.post("/project/create-ideas", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-
-      setIdeas(response.data.ideas);
-      setImagePath(response.data.image);
+  
+      // Yönlendirmeyi hemen buraya ekleyebilirsiniz
+      await axios.post(
+        "/project/save-idea",
+        {
+          title: response.data.ideas[0].title,
+          description: response.data.ideas[0].description,
+          image_path: response.data.image,
+          materials: response.data.ideas[0].materials,
+          roadmap: response.data.ideas[0].roadmap,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      // Başarılı olduğunda direkt yönlendir
+      navigate("/profile");
+  
     } catch (err) {
       setError("Bir hata oluştu. Lütfen tekrar deneyin.");
     } finally {
       setLoading(false);
     }
   };
+  
 
   const handleSelectIdea = async () => {
     if (!selectedIdea) return;

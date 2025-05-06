@@ -1,216 +1,165 @@
 import React, { useState } from 'react';
-import { Container, Row, Col, Card, Form, Button, Alert } from 'react-bootstrap';
+import { Container, Row, Col, Card, Form, Button, ListGroup, Spinner, Alert } from 'react-bootstrap';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import projectService from '../services/projectService';
 
-const NewProject = () => {
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    image: null
-  });
-  const [previewUrl, setPreviewUrl] = useState('');
+const ProjectIdeaSelector = ({ token }) => {
+  const [file, setFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [ideas, setIdeas] = useState([]);
+  const [selectedIdea, setSelectedIdea] = useState(null);
+  const [imagePath, setImagePath] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [step, setStep] = useState(1);
-  const [projectId, setProjectId] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+
   const navigate = useNavigate();
 
-  const { name, description } = formData;
-
-  // Form değişikliğini izleme
-  const onChange = e => {
-    if (e.target.name === 'image') {
-      // Görsel yükleme işlemi
-      const file = e.target.files[0];
-      setFormData({ ...formData, image: file });
-      
-      // Görsel önizleme
-      if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setPreviewUrl(reader.result);
-        };
-        reader.readAsDataURL(file);
-      } else {
-        setPreviewUrl('');
-      }
-    } else {
-      setFormData({ ...formData, [e.target.name]: e.target.value });
-    }
+  const handleFileChange = (e) => {
+    const selected = e.target.files[0];
+    setFile(selected);
+    setPreviewUrl(URL.createObjectURL(selected));
   };
 
-  // Form gönderme
-  const onSubmit = async e => {
-    e.preventDefault();
-    setError('');
+  const handleUpload = async () => {
+    if (!file) return;
     setLoading(true);
-
-    // Form doğrulama
-    if (!name || !description || !formData.image) {
-      setError('Lütfen tüm alanları doldurun ve bir görsel yükleyin.');
-      setLoading(false);
-      return;
-    }
+    setError(null);
 
     try {
-      // Project service kullanarak API'ye gönder
-      const result = await projectService.createProject(
-        { name, description },
-        formData.image
-      );
-      
-      console.log('Project created:', result);
-      setProjectId(result.project_id);
-      setLoading(false);
-      setStep(2); // Başarılı olduğunda sonraki adıma geç
-      
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const response = await axios.post("/project/create-ideas", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setIdeas(response.data.ideas);
+      setImagePath(response.data.image);
     } catch (err) {
-      console.error('Error creating project:', err);
-      // Handle different error formats safely
-      let errorMessage = 'Proje oluşturulurken bir hata oluştu.';
-      
-      if (err.response && err.response.data) {
-        if (typeof err.response.data.detail === 'string') {
-          errorMessage = err.response.data.detail;
-        } else if (err.response.data.detail && err.response.data.detail.msg) {
-          errorMessage = err.response.data.detail.msg;
-        }
-      }
-      
-      setError(errorMessage);
+      setError("Bir hata oluştu. Lütfen tekrar deneyin.");
+    } finally {
       setLoading(false);
     }
   };
 
-  // Roadmap gösterme ve projeye git
-  const viewRoadmap = () => {
-    if (projectId) {
-      navigate(`/project/${projectId}`);
-    } else {
-      // Test için geçici yönlendirme
-      navigate('/profile');
+  const handleSelectIdea = async () => {
+    if (!selectedIdea) return;
+    setSaving(true);
+    setError(null);
+
+    try {
+      console.log("Selected Idea:", selectedIdea);
+
+      const response = await axios.post(
+          "/project/save-idea",
+          {
+              title: selectedIdea.title,
+              description: selectedIdea.description,
+              image_path: imagePath,
+              materials: selectedIdea.materials,
+              roadmap: selectedIdea.roadmap,
+          },
+          {
+              headers: {
+                  Authorization: `Bearer ${token}`,
+              },
+          }
+      );
+
+      // Başarılı olduktan sonra yönlendir
+      navigate("/project/my-ideas");
+    } catch (err) {
+      setError("Proje kaydedilemedi.");
+    } finally {
+      setSaving(false);
     }
   };
 
   return (
     <Container className="py-5">
-      <Row className="justify-content-center">
-        <Col lg={8}>
-          <Card className="shadow border-0">
-            <Card.Header className="bg-white border-0 text-center py-3">
-              <h3 className="mb-0">
-                {step === 1 ? 'Yeni Proje Oluştur' : 'Proje Oluşturuldu!'}
-              </h3>
-            </Card.Header>
-            
-            {/* Adım 1: Proje Bilgisi ve Görsel Yükleme */}
-            {step === 1 && (
-              <Card.Body className="px-4 py-4">
-                {error && <Alert variant="danger">{error}</Alert>}
-                
-                <Form onSubmit={onSubmit}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Proje Adı</Form.Label>
-                    <Form.Control
-                      type="text"
-                      placeholder="Projeniz için bir isim girin"
-                      name="name"
-                      value={name}
-                      onChange={onChange}
-                    />
-                  </Form.Group>
+      <h2 className="text-center mb-4">Fikir Oluştur</h2>
 
-                  <Form.Group className="mb-3">
-                    <Form.Label>Açıklama</Form.Label>
-                    <Form.Control
-                      as="textarea"
-                      rows={3}
-                      placeholder="Dönüştürmek istediğiniz eşyayı tanımlayın"
-                      name="description"
-                      value={description}
-                      onChange={onChange}
-                    />
-                    <Form.Text className="text-muted">
-                      Bu eşyayı nasıl dönüştürmek istediğinizi detaylı olarak anlatın.
-                    </Form.Text>
-                  </Form.Group>
+      {!ideas.length ? (
+        <Card className="mx-auto p-4" style={{ maxWidth: 500 }}>
+          <Form.Group>
+            <Form.Label>Bir görsel yükleyin</Form.Label>
+            <Form.Control type="file" accept="image/*" onChange={handleFileChange} />
+          </Form.Group>
 
-                  <Form.Group className="mb-4">
-                    <Form.Label>Eşya Görseli</Form.Label>
-                    <Form.Control
-                      type="file"
-                      accept="image/*"
-                      name="image"
-                      onChange={onChange}
-                    />
-                    <Form.Text className="text-muted">
-                      Dönüştürmek istediğiniz eşyanın fotoğrafını yükleyin.
-                    </Form.Text>
-                  </Form.Group>
+          {previewUrl && (
+            <img
+              src={previewUrl}
+              alt="Önizleme"
+              className="img-fluid img-thumbnail mt-3"
+              style={{ maxHeight: 200 }}
+            />
+          )}
 
-                  {previewUrl && (
-                    <div className="text-center mb-4">
-                      <img 
-                        src={previewUrl} 
-                        alt="Önizleme" 
-                        style={{ maxHeight: '200px' }} 
-                        className="img-thumbnail"
-                      />
-                    </div>
-                  )}
+          <div className="d-grid mt-4">
+            <Button variant="primary" onClick={handleUpload} disabled={loading || !file}>
+              {loading ? <Spinner animation="border" size="sm" /> : "Fikirleri Oluştur"}
+            </Button>
+          </div>
 
-                  <div className="d-grid">
-                    <Button 
-                      variant="success" 
-                      type="submit"
-                      disabled={loading}
-                    >
-                      {loading ? (
-                        <>
-                          <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                          İşleniyor...
-                        </>
-                      ) : (
-                        'Projeyi Oluştur'
-                      )}
-                    </Button>
-                  </div>
-                </Form>
-              </Card.Body>
-            )}
-            
-            {/* Adım 2: Başarılı Oluşturma */}
-            {step === 2 && (
-              <Card.Body className="px-4 py-5 text-center">
-                <div className="mb-4">
-                  <div className="bg-success text-white rounded-circle d-inline-flex justify-content-center align-items-center" style={{width: '80px', height: '80px'}}>
-                    <i className="fas fa-check fa-3x"></i>
-                  </div>
-                </div>
-                
-                <h4 className="mb-3">Projeniz Başarıyla Oluşturuldu!</h4>
-                <p className="text-muted mb-4">
-                  Yüklediğiniz fotoğraf ve açıklamaya göre dönüşüm yol haritası hazırlanmıştır.
-                </p>
-                
-                <div className="d-grid">
-                  <Button 
-                    variant="success" 
-                    size="lg"
-                    onClick={viewRoadmap}
+          {error && <Alert variant="danger" className="mt-3">{error}</Alert>}
+        </Card>
+      ) : (
+        <>
+          <Row className="g-4 mt-4">
+            {ideas.map((idea, index) => (
+              <Col md={4} key={index}>
+                <Card
+                  className={`h-100 ${selectedIdea?.title === idea.title ? 'border-success shadow' : ''}`}
+                  onClick={() => setSelectedIdea(idea)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <Card.Body>
+                    <Card.Title>{idea.title}</Card.Title>
+                    <Card.Text>{idea.description}</Card.Text>
+                    <h6>Gerekli Malzemeler:</h6>
+                    <ul>
+                      {idea.materials.map((m, i) => <li key={i}>{m}</li>)}
+                    </ul>
+                  </Card.Body>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+
+          {selectedIdea && (
+            <Card className="mt-5">
+              <Card.Header>
+                <h5>Seçilen Fikir: {selectedIdea.title}</h5>
+              </Card.Header>
+              <Card.Body>
+                <h6>Yol Haritası:</h6>
+                <ListGroup variant="flush">
+                  {selectedIdea.roadmap.map((step, i) => (
+                    <ListGroup.Item key={i}>{i + 1}. {step}</ListGroup.Item>
+                  ))}
+                </ListGroup>
+
+                <div className="d-grid mt-4">
+                  <Button
+                    variant="success"
+                    onClick={handleSelectIdea}
+                    disabled={saving}
                   >
-                    <i className="fas fa-map-signs me-2"></i>
-                    Yol Haritasını Görüntüle
+                    {saving ? <Spinner animation="border" size="sm" /> : "Bu Projeyi Seç"}
                   </Button>
                 </div>
+
+                {error && <Alert variant="danger" className="mt-3">{error}</Alert>}
               </Card.Body>
-            )}
-          </Card>
-        </Col>
-      </Row>
+            </Card>
+          )}
+        </>
+      )}
     </Container>
   );
 };
 
-export default NewProject; 
+export default ProjectIdeaSelector;

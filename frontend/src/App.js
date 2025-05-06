@@ -22,7 +22,7 @@ import ProjectDetail from './pages/ProjectDetail';
 function App() {
   // Basit auth kontrol fonksiyonu - ileride JWT token kontrolü ile geliştirilecek
   const isAuthenticated = () => {
-    return localStorage.getItem('token') !== null;
+    return localStorage.getItem('access_token') !== null;
   };
 
   // Protected route için özel component

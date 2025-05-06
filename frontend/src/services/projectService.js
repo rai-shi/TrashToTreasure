@@ -2,7 +2,7 @@ import axios from 'axios';
 import authService from './authService';
 import geminiService from './geminiService';
 
-const API_URL = 'http://localhost:8002';
+const API_URL = 'http://localhost:8000';
 
 // Create axios instance with authorization header
 const authAxios = async () => {
@@ -58,7 +58,7 @@ const projectService = {
   getUserProjects: async () => {
     try {
       const axiosInstance = await authAxios();
-      const response = await axiosInstance.get('/user/projects');
+      const response = await axiosInstance.get('/project/my-ideas');
       return response.data;
     } catch (error) {
       console.error('Error fetching user projects:', error);
@@ -109,25 +109,22 @@ const projectService = {
   /**
    * Get project roadmap
    */
-  getProjectRoadmap: async (projectId) => {
+  getProjectRoadmap: (projectId, projects) => {
     try {
-      const axiosInstance = await authAxios();
-      const response = await axiosInstance.get(`/projects/${projectId}/roadmap`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching project roadmap:', error);
-      
-      // Handle token expiration or unauthorized access
-      if (error.response?.status === 401) {
-        authService.logout();
-        throw new Error('Your session has expired. Please login again.');
+      // Projeler içinde projectId'yi bul ve ilgili yol haritasını döndür
+      const project = projects.find(p => p.id === projectId);
+      if (project && project.roadmap) {
+        console.log('[DEBUG2] Found roadmap for project:', project.name);
+        return project.roadmap;
+      } else {
+        throw new Error('Roadmap not found for this project.');
       }
-      
-      // Handle other errors
-      const errorMessage = error.response?.data?.detail || 'Failed to fetch project roadmap';
-      throw new Error(errorMessage);
+    } catch (error) {
+      console.error('Error retrieving roadmap from project:', error);
+      throw new Error('Failed to fetch roadmap from project.');
     }
   }
+
 };
 
 export default projectService; 

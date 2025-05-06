@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 // Axios için backend URL'ini ayarla
-axios.defaults.baseURL = 'http://localhost:8002';
+axios.defaults.baseURL = 'http://127.0.0.1:8000';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -65,7 +65,7 @@ const Register = () => {
       console.log('Yanıt alındı:', res);
 
       // Başarılı kayıt
-      if (res.data && res.data.id) {
+      if (res.data && res.data.user && res.data.user.id)        {
         console.log('Kayıt başarılı, giriş sayfasına yönlendiriliyor');
         navigate('/login');
       } else {

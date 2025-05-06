@@ -6,8 +6,11 @@ from dotenv import load_dotenv
 import os
 
 # Load environment variables from root directory
-load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env'))
+current_directory = os.path.dirname(os.path.abspath(__file__)) # utils directory, routers
+backend_directory = os.path.dirname(current_directory) # backend directory
 
+environment_path = backend_directory + "/.env"
+load_dotenv(environment_path)
 # Get API key from environment variable
 API_KEY = os.getenv('GEMINI_API_KEY')
 if not API_KEY:

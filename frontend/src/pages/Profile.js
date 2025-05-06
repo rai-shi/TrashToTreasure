@@ -5,7 +5,7 @@ import axios from 'axios';
 import projectService from '../services/projectService';
 
 // Backend base URL
-const API_URL = 'http://localhost:8002';
+const API_URL = "http://127.0.0.1:8000";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -14,11 +14,41 @@ const Profile = () => {
   const [error, setError] = useState('');
   const [projects, setProjects] = useState([]);
 
+  const handleDelete = async (itemId) => {
+    if (!window.confirm("Bu projeyi silmek istediğinize emin misiniz?")) return;
+  
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        alert("Giriş yapmanız gerekiyor.");
+        return;
+      }
+  
+      const response = await axios.delete(`${API_URL}/project/my-ideas/${itemId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+  
+      if (response.status === 204) {
+        alert("Proje başarıyla silindi.");
+        // Silinen projeyi listeden çıkar
+        setProjects(prevProjects => prevProjects.filter(p => p.id !== itemId));
+      } else {
+        alert("Proje silinemedi.");
+      }
+    } catch (error) {
+      console.error("Silme hatası:", error);
+      alert("Bir hata oluştu, lütfen tekrar deneyin.");
+    }
+  };
+  
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         // Check if token exists
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('access_token');
         if (!token) {
           navigate('/login');
           return;
@@ -57,7 +87,7 @@ const Profile = () => {
         // Check if it's an authentication error
         if (err.response && (err.response.status === 401 || err.response.status === 403)) {
           // Clear token and redirect to login
-          localStorage.removeItem('token');
+          localStorage.removeItem('access_token');
           navigate('/login');
           return;
         }
@@ -87,7 +117,7 @@ const Profile = () => {
     if (imagePath.startsWith('http')) {
       return imagePath;
     }
-    
+    console.log('Image path:', imagePath);
     // Otherwise, assume it's a path on the server
     return `${API_URL}/${imagePath}`;
   };
@@ -194,6 +224,7 @@ const Profile = () => {
                             <Button
                               variant="outline-danger"
                               size="sm"
+                              onClick={() => handleDelete(project.id)} // itemId, silmek istediğin projenin id'si olmalı
                             >
                               <i className="fas fa-trash-alt me-2"></i>Sil
                             </Button>

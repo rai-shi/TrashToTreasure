@@ -1,19 +1,14 @@
 """
-API endpoints for projects:
-- get_projects
-- get_project
-- create_project
-- create_ideas
+get_recyclable_item_image
+get_materials
+create_ideas
+get_roadmap
 """
 from pydantic import BaseModel, Field
 from typing import List
 from sqlalchemy.orm import Session
 
 from starlette import status
-<<<<<<< HEAD
-from typing import Annotated, List, Optional
-from fastapi import APIRouter, Depends, Path, HTTPException, Request, UploadFile, File, Form
-=======
 from starlette.responses import RedirectResponse
 from utils.models import Base, Project
 from utils.database import engine, SessionLocal
@@ -25,10 +20,10 @@ from fastapi import Form
 
 from fastapi.templating import Jinja2Templates
 
->>>>>>> 0afa934b42d025cb26f46261f4ee5b91dd0733b9
 from dotenv import load_dotenv
 import os
 
+import json
 
 import google.generativeai as genai
 
@@ -39,28 +34,6 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, AIMessage
 import markdown
 from bs4 import BeautifulSoup
-from utils.models import Project, User
-from utils.database import get_db
-from utils.auth import verify_token
-
-
-# API modelleri
-class ProjectResponse(BaseModel):
-    id: int
-    name: str
-    description: str
-    image: str
-    user_id: int
-
-class ProjectCreateRequest(BaseModel):
-    name: str
-    description: str
-
-class IdeaResponse(BaseModel):
-    id: int
-    title: str
-    description: str
-    difficulty: str
 
 from utils.database import SessionLocal, get_db
 from utils.models import User, Base, Project, ProjectSchema
@@ -77,110 +50,6 @@ router = APIRouter(
     tags=["Project"]
 )
 
-<<<<<<< HEAD
-db_dependency = Annotated[Session, Depends(get_db)]
-user_dependency = Annotated[dict, Depends(verify_token)]
-
-@router.get("/explore", response_model=List[ProjectResponse])
-async def get_projects(db: db_dependency):
-    """
-    Get all projects
-    """
-    # Örnek proje verileri döndürüyoruz
-    # Gerçek uygulamada veritabanından çekilecek
-    return [
-        {
-            "id": 1,
-            "name": "Şişe Lamba",
-            "description": "Eski cam şişeleri dekoratif lambalara dönüştürün.",
-            "image": "https://via.placeholder.com/300x200?text=Sise+Lamba",
-            "user_id": 1
-        },
-        {
-            "id": 2,
-            "name": "Palet Sehpa",
-            "description": "Atık ahşap paletlerden şık bir sehpa yapımı.",
-            "image": "https://via.placeholder.com/300x200?text=Palet+Sehpa",
-            "user_id": 2
-        },
-        {
-            "id": 3,
-            "name": "T-Shirt Çanta",
-            "description": "Eski tişörtlerinizden dikişsiz alışveriş çantası yapın.",
-            "image": "https://via.placeholder.com/300x200?text=Tisort+Canta",
-            "user_id": 1
-        }
-    ]
-
-@router.get("/{project_id}", response_model=ProjectResponse)
-async def get_project(project_id: int, db: db_dependency):
-    """
-    Get project by id
-    """
-    # Gerçek uygulamada veritabanından ID'ye göre proje çekilecek
-    return {
-        "id": project_id,
-        "name": "Örnek Proje",
-        "description": "Bu bir örnek projedir",
-        "image": "https://via.placeholder.com/300x200?text=Ornek+Proje",
-        "user_id": 1
-    }
-
-@router.post("/create", response_model=ProjectResponse)
-async def create_project(
-    name: str = Form(...),
-    description: str = Form(...),
-    image: UploadFile = File(...),
-    user: user_dependency = None,
-    db: db_dependency = None
-):
-    """
-    Create a new project
-    """
-    # Gerçek uygulamada dosya kaydedilip veritabanına proje eklenecek
-    
-    # Şu an için sadece örnek bir yanıt döndürüyoruz
-    return {
-        "id": 10,
-        "name": name,
-        "description": description,
-        "image": "https://via.placeholder.com/300x200?text=Yeni+Proje",
-        "user_id": user["user_id"] if user else 1
-    }
-
-@router.post("/ideas", response_model=List[IdeaResponse])
-async def generate_ideas(
-    item_description: str = Form(...),
-    image: Optional[UploadFile] = File(None),
-    user: user_dependency = None
-):
-    """
-    Generate recycling ideas for an item
-    """
-    # Gerçek uygulamada Google GenAI API'si kullanılabilir
-    
-    # Şu an için sabit veriler döndürüyoruz
-    return [
-        {
-            "id": 1,
-            "title": "Dekoratif Vazo",
-            "description": "Temizlendikten sonra cam boyasıyla renklendirilip dekoratif bir vazoya dönüştürülebilir.",
-            "difficulty": "Kolay"
-        },
-        {
-            "id": 2,
-            "title": "LED Lamba",
-            "description": "İçine LED ışık dizisi yerleştirilerek şık bir gece lambası yapılabilir.",
-            "difficulty": "Orta"
-        },
-        {
-            "id": 3,
-            "title": "Bahçe Süsü",
-            "description": "Renkli camlarla kaplanarak bahçe için dekoratif bir süs oluşturulabilir.",
-            "difficulty": "Zor"
-        }
-    ]
-=======
 class EditRequest(BaseModel):
     recycled_image: str
     is_public: bool = Field(default=False)
@@ -200,7 +69,7 @@ user_dependency = Annotated[dict, Depends(verify_token)]
 def ask_gemini(image):
     example = [
         {
-            "name": "Kalemlik",
+            "title": "Kalemlik",
             "description": "Kullanılmayan bardağı bir kalemliğe dönüştürün.",
             "materials": ["Cam Boyası"],
             "roadmap": [
@@ -210,7 +79,7 @@ def ask_gemini(image):
             ]
         },
         {
-            "name": "Gece Lambası",
+            "title": "Gece Lambası",
             "description": "Kullanılmayan bardağı gece lambası yapın.",
             "materials": ["LED ışık", "Kablo", "Mukavva"],
             "roadmap": [
@@ -248,9 +117,7 @@ async def get_recycle_ideas(
                     request: Request,
                     user:user_dependency,
                     db: db_dependency,
-                    image: UploadFile = File(...),
-                    # title: str = Form(...),
-                    # description: str = Form(...),
+                    image: UploadFile = File(...)
                 ): 
     try:
         # token = request.cookies.get("access_token")
@@ -265,7 +132,6 @@ async def get_recycle_ideas(
         return redirect_to_login()
     
     image_path = await save_image(image)
-    print(image_path)
     
     """
     get image from request
@@ -283,7 +149,6 @@ async def get_recycle_ideas(
     """
                     
     ideas = ask_gemini(image)
-    print(ideas)
 
     content = {
         "image": image_path,
@@ -329,11 +194,9 @@ async def save_selected_idea(
                             request: Request,
                             user: user_dependency,
                             db: db_dependency,
-                            idea: IdeaRequest
+                            # idea: IdeaRequest
                         ):
     try:
-        # token = request.cookies.get("access_token")
-
         auth_header = request.headers.get("Authorization")
         token = auth_header.split(" ")[1]
 
@@ -344,38 +207,45 @@ async def save_selected_idea(
         user = get_user_by_id(db=db, user_id=verified_user["user_id"])
     except:
         return redirect_to_login()
+    body = await request.json()
+    title = body.get("title")
+    description = body.get("description")
+    image_path = body.get("image_path")
+    materials = body.get("materials")
+    roadmap = body.get("roadmap")
 
+    # Veri eksikse hata dönüyoruz
+    if not all([title, description, image_path, materials, roadmap]):
+        raise HTTPException(status_code=400, detail="Missing required fields")
 
     new_project = Project(
         user_id     = user.id,
-        image       = idea.image_path,
-        title       = idea.title,
-        description = idea.description,
-        materials   = "-".join([f"{{{item}}}" for item in idea.materials]),
-        roadmap     = "-".join([f"{{{item}}}" for item in idea.roadmap]), 
+        image       = image_path,
+        title       = title,
+        description = description,
+        materials   = "-".join([f"{{{item}}}" for item in materials]),
+        roadmap     = "-".join([f"{{{item}}}" for item in roadmap]), 
         created_at  = datetime.now(tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
     )
-
     db.add(new_project)
     db.commit()
     db.refresh(new_project)
-    print(new_project)
 
     return RedirectResponse(
         url=f"/project/my-ideas/{new_project.id}",
         status_code=status.HTTP_302_FOUND)
     
-@router.get("/my-ideas", status_code=status.HTTP_200_OK) # get all projects
+
+
+
+@router.get("/my-ideas", status_code=status.HTTP_200_OK)
 async def get_ideas(
                     request: Request, 
                     user: user_dependency,
                     db: db_dependency):
     try:
-        # token = request.cookies.get("access_token")
-
         auth_header = request.headers.get("Authorization")
         token = auth_header.split(" ")[1]
-
         verified_user = verify_token(token)
         if verified_user is None:
             return redirect_to_login()
@@ -384,37 +254,41 @@ async def get_ideas(
         return redirect_to_login()
         
     items = db.query(Project).filter(Project.user_id == user.id).all()
-    if not items:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No projects found")
-    
+
     response_data = [ ProjectSchema.model_validate(item).model_dump() for item in items ]
     return JSONResponse(content=response_data)
 
-@router.get("/my-ideas/{item_id}", status_code=status.HTTP_200_OK) # Project get
+@router.get("/my-ideas/{item_id}", status_code=status.HTTP_200_OK)  # Project get
 async def get_idea(
                     request: Request,
                     user: user_dependency,
                     db: db_dependency,
                     item_id: int):
     try:
-        # token = request.cookies.get("access_token")
-
+        # Retrieve token from Authorization header
         auth_header = request.headers.get("Authorization")
         token = auth_header.split(" ")[1]
 
         verified_user = verify_token(token)
         if verified_user is None:
             return redirect_to_login()
-        
+
         user = get_user_by_id(db=db, user_id=verified_user["user_id"])
     except:
         return redirect_to_login()
+
+    # Fetch project from database
     item = db.query(Project).filter(Project.id == item_id).filter(Project.user_id == user.id).first()
+    
     if item is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
-    
+
+    # Assuming roadmap is an attribute of the Project model (adjust according to your schema)
     response_data = ProjectSchema.model_validate(item).model_dump() 
+    response_data["user"] = user.username
+    
     return JSONResponse(content=response_data)
+
 
 
 
@@ -423,12 +297,13 @@ async def get_idea(
 async def edit_idea(
                     request: Request,
                     user: user_dependency,
-                     db: db_dependency, 
-                     item_id: int, 
-                     edit_request: EditRequest):
+                    db: db_dependency, 
+                    item_id: int,
+                    recycled_image: UploadFile = File(...),
+                    is_public: bool = Form(...)
+                    ):
+    print(item_id)
     try:
-        # token = request.cookies.get("access_token")
-
         auth_header = request.headers.get("Authorization")
         token = auth_header.split(" ")[1]
 
@@ -443,12 +318,19 @@ async def edit_idea(
     item = db.query(Project).filter(Project.id == item_id).filter(Project.user_id == user.id).first()
     if item is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
-    item.recycled_image = edit_request.recycled_image
-    item.is_public = edit_request.is_public
+    
+    # body = await request.json()
+    # recycled_image = body.get("recycled_image")
+    # is_public = body.get("is_public")
+    image_path = await save_image(recycled_image)
+    item.recycled_image = image_path
+    item.is_public = is_public
     db.add(item)
     db.commit()
     db.refresh(item)
-    return JSONResponse(content=item)
+    response_data = ProjectSchema.model_validate(item).model_dump() 
+    
+    return JSONResponse(content=response_data)
 
 # what is delete status code
 
@@ -478,4 +360,3 @@ async def delete_idea(
     else:
         db.delete(item)
         db.commit()
->>>>>>> 0afa934b42d025cb26f46261f4ee5b91dd0733b9

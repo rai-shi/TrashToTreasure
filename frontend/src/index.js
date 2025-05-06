@@ -6,7 +6,7 @@ import reportWebVitals from './reportWebVitals';
 import axios from 'axios';
 
 // Global Axios ayarları
-axios.defaults.baseURL = 'http://localhost:8002';
+axios.defaults.baseURL = 'http://127.0.0.1:8000';
 
 // Axios interceptor - hataları global olarak işle
 axios.interceptors.response.use(
@@ -20,7 +20,7 @@ axios.interceptors.response.use(
 // Token varsa headers'a ekle
 axios.interceptors.request.use(
   config => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('access_token');
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }

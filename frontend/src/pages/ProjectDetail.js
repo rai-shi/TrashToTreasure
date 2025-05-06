@@ -3,7 +3,9 @@ import { Container, Row, Col, Card, Button, Badge, Alert, Nav, Tab } from 'react
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import ProjectRoadmap from '../components/project/ProjectRoadmap';
+import ShareModal from '../components/project/EditModal'; // doğru yoldan import et
 import projectService from '../services/projectService';
+import { Carousel } from 'react-bootstrap';
 
 const ProjectDetail = () => {
   const { id } = useParams();
@@ -11,17 +13,18 @@ const ProjectDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('steps');
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     const fetchProject = async () => {
       try {
         // Try to get project from our API
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('access_token');
         if (!token) {
           throw new Error('Authentication required');
         }
 
-        const response = await axios.get(`http://localhost:8002/projects/${id}`, {
+        const response = await axios.get(`http://127.0.0.1:8000/project/my-ideas/${id}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -101,7 +104,7 @@ const ProjectDetail = () => {
     }
     
     // Otherwise, assume it's a path on the server
-    return `http://localhost:8002/${project.image}`;
+    return `http://127.0.0.1:8000/${project.image}`;
   };
 
   // Generate steps list from roadmap
@@ -109,6 +112,7 @@ const ProjectDetail = () => {
     if (!project || !project.roadmap || !project.roadmap.length) {
       return project?.steps || [];
     }
+    // console.log("roadmap: ",project.roadmap);
     
     return project.roadmap.map(step => step.description);
   };
@@ -122,7 +126,7 @@ const ProjectDetail = () => {
           <Row className="mb-4">
             <Col>
               <div className="d-flex justify-content-between align-items-center mb-3">
-                <h1>{project.name}</h1>
+                <h1>{project.title}</h1>
                 <div>
                   <Button variant="outline-secondary" as={Link} to="/explore" className="me-2">
                     <i className="fas fa-arrow-left me-2"></i>Geri
@@ -131,19 +135,77 @@ const ProjectDetail = () => {
               </div>
               <p className="text-muted">
                 <i className="fas fa-user me-2"></i>
-                {project.user && project.user.username ? project.user.username : 'Kullanıcı'}
+                {project.user ? project.user : 'Kullanıcı'}
+                {console.log("project.user: ", project.user)}
               </p>
             </Col>
           </Row>
 
           <Row className="mb-5">
             <Col lg={8}>
-              <img 
+              
+              {/* <img 
                 src={getImageUrl()} 
                 alt={project.name} 
-                className="img-fluid rounded shadow mb-4 w-100"
-                style={{ maxHeight: '400px', objectFit: 'cover' }}
-              />
+                className="img-fluid rounded shadow mb-4"
+                style={{ 
+                  width: '100%',
+                  height: '400px',           // Sabit yükseklik
+                  objectFit: 'contain',      // Resim taşmadan içeri sığar
+                  objectPosition: 'center',  // Ortalanır
+                  backgroundColor: '#f8f9fa' // Boşluklar görünürse hoş dursun
+                }}
+              /> */}
+              {project.recycled_image
+              ? (
+                <Carousel className="mb-4 shadow rounded" style={{ backgroundColor: '#f8f9fa' }}>
+                  {/* Ana proje görseli */}
+                  <Carousel.Item>
+                    <img
+                      className="d-block w-100"
+                      src={project.image.startsWith('http') ? project.image : `http://127.0.0.1:8000/${project.image}`}
+                      alt={project.name}
+                      style={{
+                        height: '400px',
+                        objectFit: 'contain',
+                        objectPosition: 'center'
+                      }}
+                    />
+                  </Carousel.Item>
+
+                  {/* Geri dönüştürülmüş görsel(ler) */}
+                  {(Array.isArray(project.recycled_image) ? project.recycled_image : [project.recycled_image]).map((img, index) => (
+                    <Carousel.Item key={index}>
+                      <img
+                        className="d-block w-100"
+                        src={img.startsWith('http') ? img : `http://127.0.0.1:8000/${img}`}
+                        alt={`Recycled ${index + 1}`}
+                        style={{
+                          height: '400px',
+                          objectFit: 'contain',
+                          objectPosition: 'center'
+                        }}
+                      />
+                    </Carousel.Item>
+                  ))}
+                </Carousel>
+              ) : (
+                // Sadece ana görseli göster
+                <img 
+                  src={project.image.startsWith('http') ? project.image : `http://127.0.0.1:8000/${project.image}`} 
+                  alt={project.name} 
+                  className="img-fluid rounded shadow mb-4"
+                  style={{ 
+                    width: '100%',
+                    height: '400px',
+                    objectFit: 'contain',
+                    objectPosition: 'center',
+                    backgroundColor: '#f8f9fa'
+                  }}
+                />
+              )
+            }
+
               <Card className="shadow-sm border-0 mb-4">
                 <Card.Body>
                   <h4>Proje Açıklaması</h4>
@@ -154,22 +216,24 @@ const ProjectDetail = () => {
             
             <Col lg={4}>
               <Card className="shadow-sm border-0 mb-4">
-                <Card.Body>
-                  <h4 className="mb-3">Proje Detayları</h4>
-                  <p>
-                    <i className="fas fa-star-half-alt me-2 text-warning"></i>
-                    <strong>Zorluk:</strong> {project.difficulty || 'Orta'}
-                  </p>
-                  <p>
-                    <i className="fas fa-clock me-2 text-info"></i>
-                    <strong>Tahmini Süre:</strong> {project.estimated_time || '2 saat'}
-                  </p>
-                  <div className="d-grid">
-                    <Button variant="success">
-                      <i className="fas fa-heart me-2"></i>Favorilere Ekle
-                    </Button>
-                  </div>
-                </Card.Body>
+                  <Card.Body>
+                    <h4 className="mb-3">Proje Detayları</h4>
+                    <p>
+                      <i className="fas fa-globe me-2 text-primary"></i>
+                      <strong>Görünürlük:</strong> {project.is_public ? 'Herkese Açık' : 'Gizli'}
+                    </p>
+                    <div className="d-grid">
+                    <Button variant="warning" onClick={() => setShowModal(true)}>
+                        <i className="fas fa-edit me-2"></i>Projeyi Güncelle
+                      </Button>
+
+                      <ShareModal 
+                        show={showModal} 
+                        onHide={() => setShowModal(false)} 
+                        projectId={project.id}
+                      />
+                    </div>
+                  </Card.Body>
               </Card>
               
               <Card className="shadow-sm border-0 mb-4">
@@ -191,47 +255,17 @@ const ProjectDetail = () => {
           <Row>
             <Col>
               <Card className="shadow-sm border-0">
-                <Card.Header className="bg-white border-bottom pt-3">
-                  <Nav variant="tabs" className="border-bottom-0" activeKey={activeTab} onSelect={setActiveTab}>
-                    <Nav.Item>
-                      <Nav.Link eventKey="steps">
-                        <i className="fas fa-list-ol me-2"></i>Adımlar
-                      </Nav.Link>
-                    </Nav.Item>
-                    <Nav.Item>
-                      <Nav.Link eventKey="roadmap">
-                        <i className="fas fa-project-diagram me-2"></i>Yol Haritası
-                      </Nav.Link>
-                    </Nav.Item>
-                  </Nav>
-                </Card.Header>
+              <Card.Header className="bg-white border-bottom pt-3">
+                <h4 className="mb-0">
+                  <i className="fas fa-project-diagram me-2"></i>Proje Yol Haritası
+                </h4>
+              </Card.Header>
+
                 <Card.Body>
-                  <Tab.Content>
-                    <Tab.Pane eventKey="steps">
-                      <h4 className="mb-4">Yapım Adımları</h4>
-                      <div className="timeline">
-                        {getStepsList().map((step, index) => (
-                          <div key={index} className="timeline-item mb-4">
-                            <div className="d-flex">
-                              <div className="me-3">
-                                <Badge bg="success" className="p-2 rounded-circle">{index + 1}</Badge>
-                              </div>
-                              <div>
-                                <p className="mb-0">{step}</p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </Tab.Pane>
-                    <Tab.Pane eventKey="roadmap">
-                      <h4 className="mb-4">Proje Yol Haritası</h4>
-                      <div className="roadmap-container">
-                        <ProjectRoadmap projectId={project.id} />
-                      </div>
-                    </Tab.Pane>
-                  </Tab.Content>
+                  <h4 className="mb-4">Proje Yol Haritası</h4>
+                  <ProjectRoadmap roadmap={project.roadmap} />
                 </Card.Body>
+
               </Card>
             </Col>
           </Row>
@@ -242,3 +276,4 @@ const ProjectDetail = () => {
 };
 
 export default ProjectDetail; 
+

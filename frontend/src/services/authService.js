@@ -1,17 +1,17 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8002';
+const API_URL = 'http://127.0.0.1:8000';
 
 const authService = {
   getToken: () => {
-    return localStorage.getItem('token');
+    return localStorage.getItem('access_token');
   },
 
   setToken: (token) => {
     if (token) {
-      localStorage.setItem('token', token);
+      localStorage.setItem('access_token', token);
     } else {
-      localStorage.removeItem('token');
+      localStorage.removeItem('access_token');
     }
   },
 

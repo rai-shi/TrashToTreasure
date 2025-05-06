@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 // Axios için backend URL'ini ayarla
-axios.defaults.baseURL = 'http://localhost:8002';
+axios.defaults.baseURL = 'http://127.0.0.1:8000';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -20,7 +20,7 @@ const Login = () => {
   const onChange = e => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-
+  
   const onSubmit = async e => {
     e.preventDefault();
     setError('');
@@ -42,7 +42,7 @@ const Login = () => {
 
       // Başarılı login
       if (res.data && res.data.access_token) {
-        localStorage.setItem('token', res.data.access_token);
+        localStorage.setItem('access_token', res.data.access_token);
         navigate('/profile');
       } else {
         setError('Beklenmeyen bir hata oluştu.');

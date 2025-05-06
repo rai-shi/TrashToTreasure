@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from starlette import status
 from fastapi.security import OAuth2PasswordBearer
 from utils.models import User
-import hashlib
+from passlib.context import CryptContext
 from typing import Annotated
 from sqlalchemy.orm import Session
 from jose import jwt, JWTError
@@ -14,11 +14,6 @@ from fastapi.responses import RedirectResponse
 import os
 from dotenv import load_dotenv
 
-<<<<<<< HEAD
-load_dotenv()
-JWT_SECRET_KEY  = os.getenv("JWT_SECRET_KEY", "supersecretkey")
-JWT_ALGORITHM   = os.getenv("JWT_ALGORITHM", "HS256")
-=======
 current_directory = os.path.dirname(os.path.abspath(__file__)) # utils directory, routers
 backend_directory = os.path.dirname(current_directory) # backend directory
 
@@ -28,8 +23,9 @@ load_dotenv(environment_path)
 
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM")
->>>>>>> 0afa934b42d025cb26f46261f4ee5b91dd0733b9
 
+
+bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth_bearer = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 class CreateUserRequest(BaseModel):
@@ -44,22 +40,19 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
-# Basit hash fonksiyonu
-def get_password_hash(password: str) -> str:
-    return hashlib.sha256(password.encode()).hexdigest()
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return get_password_hash(plain_password) == hashed_password
 
 def authenticate_user(db: Session, 
                       username: str, 
                       password: str):
     user = db.query(User).filter(User.username == username).first()
     if not user:
-        return False
-    if not verify_password(password, user.hashed_password):
-        return False
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, 
+                             detail="Invalid credentials")
+    if not bcrypt_context.verify(password, user.hashed_password):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, 
+                             detail="Invalid credentials")
     return user
+
 
 def create_access_token(username:str, user_id:int, expire_time:timedelta):
     payload = {"sub": username, 
@@ -67,6 +60,7 @@ def create_access_token(username:str, user_id:int, expire_time:timedelta):
                  "exp": datetime.now(tz=timezone.utc) + expire_time}
     encoded_jwt = jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
     return encoded_jwt
+
 
 def verify_token(token: Annotated[str, Depends(oauth_bearer)]):
     try:
@@ -87,8 +81,6 @@ def redirect_to_login():
                                          status_code=status.HTTP_302_FOUND)
     redirect_response.delete_cookie("access_token")
     return redirect_response
-
-
 
 
 def get_user_by_id(db: Session, user_id: int):

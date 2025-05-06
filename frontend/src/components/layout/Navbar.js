@@ -14,7 +14,7 @@ const AppNavbar = () => {
   const handleLogout = () => {
     localStorage.removeItem('access_token');
     setIsAuthenticated(false);
-    navigate('/login');
+    navigate('/');
   };
 
   return (
@@ -32,6 +32,7 @@ const AppNavbar = () => {
             {isAuthenticated ? (
               <>
                 <Nav.Link as={Link} to="/profile">Profil</Nav.Link>
+                <Nav.Link as="button" onClick={handleLogout}>Çıkış Yap</Nav.Link>
               </>
             ) : (
               <>

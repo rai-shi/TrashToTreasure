@@ -25,44 +25,25 @@ const ProjectIdeaSelector = ({ token }) => {
     if (!file) return;
     setLoading(true);
     setError(null);
-  
+
     try {
       const formData = new FormData();
       formData.append("image", file);
-  
+
       const response = await axios.post("/project/create-ideas", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-  
-      // Yönlendirmeyi hemen buraya ekleyebilirsiniz
-      await axios.post(
-        "/project/save-idea",
-        {
-          title: response.data.ideas[0].title,
-          description: response.data.ideas[0].description,
-          image_path: response.data.image,
-          materials: response.data.ideas[0].materials,
-          roadmap: response.data.ideas[0].roadmap,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-  
-      // Başarılı olduğunda direkt yönlendir
-      navigate("/profile");
-  
+
+      setIdeas(response.data.ideas);
+      setImagePath(response.data.image);
     } catch (err) {
       setError("Bir hata oluştu. Lütfen tekrar deneyin.");
     } finally {
       setLoading(false);
     }
   };
-  
 
   const handleSelectIdea = async () => {
     if (!selectedIdea) return;
@@ -70,25 +51,22 @@ const ProjectIdeaSelector = ({ token }) => {
     setError(null);
 
     try {
-      console.log("Selected Idea:", selectedIdea);
-
-      const response = await axios.post(
-          "/project/save-idea",
-          {
-              title: selectedIdea.title,
-              description: selectedIdea.description,
-              image_path: imagePath,
-              materials: selectedIdea.materials,
-              roadmap: selectedIdea.roadmap,
+      await axios.post(
+        "/project/save-idea",
+        {
+          title: selectedIdea.title,
+          description: selectedIdea.description,
+          image_path: imagePath,
+          materials: selectedIdea.materials,
+          roadmap: selectedIdea.roadmap,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
           },
-          {
-              headers: {
-                  Authorization: `Bearer ${token}`,
-              },
-          }
+        }
       );
 
-      // Başarılı olduktan sonra yönlendir
       navigate("/project/my-ideas");
     } catch (err) {
       setError("Proje kaydedilemedi.");

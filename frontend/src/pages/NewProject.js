@@ -67,7 +67,7 @@ const ProjectIdeaSelector = ({ token }) => {
         }
       );
 
-      navigate("/project/my-ideas");
+      navigate("/profile");
     } catch (err) {
       setError("Proje kaydedilemedi.");
     } finally {

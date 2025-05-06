@@ -58,9 +58,8 @@ GEMINI_API_KEY=your-key
 ## Bizimle İletişime Geçin
 
 Proje hakkında sorularınız, önerileriniz ya da katkılarınız olursa bize GitHub üzerinden ulaşabilir ya da pull request açabilirsiniz. Her türlü geri bildirime açığız! 
-- [Ayşenur Tak](https://github.com/aysenurtak) – Proje sahibi ve geliştirici  
-- [](https://github.com/arkadas1) – Arayüz geliştirme  
-- [](https://github.com/arkadas2) – AI entegrasyonu  
-.
+- [Ayşenur Tak](https://github.com/rai-shi)
+- [Ali Demirci](https://github.com/AliDmrcIo) 
+- [Yusuf Kurnaz](https://github.com/yusufkrnz) 
 
 

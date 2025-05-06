@@ -15,6 +15,7 @@ jinja2
 langchain
 python-dotenv
 google-generativeai
+google-genai
 langchain-google-genai
 markdown
 bs4
